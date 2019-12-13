@@ -84,26 +84,7 @@ class Matrix extends Field implements FieldInterface
                 $subFieldInfo['node'] = $nodePath;
 
                 // Parse each field via their own fieldtype service
-                // HC HACK (2019-12-06, Gary Reckard): Fixing importing into SuperTable inside Matrix
-                // Thanks to this ==> (https://github.com/craftcms/feed-me/issues/470)
-                //$parsedValue = $this->_parseSubField($this->feedData, $subFieldHandle, $subFieldInfo);
-                foreach($nodePaths AS $nodePathKey => $nodePathVal)
-                {
-                    // Get the node number
-                    $pathArray = explode("/", $nodePathKey);
-                    $nodeNumber = $pathArray[count($pathArray)-2];
-                    $nodePathsArray[$nodeNumber][$nodePathKey] = $nodePathVal;
-                }
-
-                $i=1;
-                $parsedValue = array();	
-                foreach($nodePathsArray AS $nodePathsArrayKey => $nodePathsArrayValue)
-                {
-                    $parsedValueTemp = $this->_parseSubField($nodePathsArrayValue, $subFieldHandle, $subFieldInfo);
-                    $parsedValue["new".$i] = reset($parsedValueTemp);
-                    $i++;
-                }
-                // END HC HACK!
+                $parsedValue = $this->_parseSubField($this->feedData, $subFieldHandle, $subFieldInfo);
 
                 // Finish up with the content, also sort out cases where there's array content
                 if (isset($fieldData[$key])) {
@@ -129,7 +110,26 @@ class Matrix extends Field implements FieldInterface
             $subFieldInfo = Hash::get($complexInfo, 'info');
             $nodePaths = Hash::get($complexInfo, 'data');
 
-            $parsedValue = $this->_parseSubField($nodePaths, $subFieldHandle, $subFieldInfo);
+            // HC HACK (2019-12-06, Gary Reckard): Fixing importing into SuperTable inside Matrix
+            // Thanks to this ==> (https://github.com/craftcms/feed-me/issues/470)
+            //$parsedValue = $this->_parseSubField($nodePaths, $subFieldHandle, $subFieldInfo);
+            foreach($nodePaths AS $nodePathKey => $nodePathVal)
+            {
+                // Get the node number
+                $pathArray = explode("/", $nodePathKey);
+                $nodeNumber = $pathArray[count($pathArray)-2];
+                $nodePathsArray[$nodeNumber][$nodePathKey] = $nodePathVal;
+            }
+
+            $i=1;
+            $parsedValue = array();	
+            foreach($nodePathsArray AS $nodePathsArrayKey => $nodePathsArrayValue)
+            {
+                $parsedValueTemp = $this->_parseSubField($nodePathsArrayValue, $subFieldHandle, $subFieldInfo);
+                $parsedValue["new".$i] = reset($parsedValueTemp);
+                $i++;
+            }
+            // END HC HACK!
 
             if (isset($fieldData[$key])) {
                 $fieldData[$key] = array_merge_recursive($fieldData[$key], $parsedValue);
