@@ -113,6 +113,7 @@ class Matrix extends Field implements FieldInterface
             // HC HACK (2019-12-06, Gary Reckard): Fixing importing into SuperTable inside Matrix
             // Thanks to this ==> (https://github.com/craftcms/feed-me/issues/470)
             //$parsedValue = $this->_parseSubField($nodePaths, $subFieldHandle, $subFieldInfo);
+            $nodePathsArray = array();
             foreach($nodePaths AS $nodePathKey => $nodePathVal)
             {
                 // Get the node number
