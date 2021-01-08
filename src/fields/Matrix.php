@@ -121,7 +121,26 @@ class Matrix extends Field implements FieldInterface
             $subFieldInfo = Hash::get($complexInfo, 'info');
             $nodePaths = Hash::get($complexInfo, 'data');
 
-            $parsedValue = $this->_parseSubField($nodePaths, $subFieldHandle, $subFieldInfo);
+            // HC Hack by TJ based on 4.3.4
+            // Original HC HACK (2019-12-06, Gary Reckard): Fixing importing into SuperTable inside Matrix
+            // Thanks to this ==> (https://github.com/craftcms/feed-me/issues/470)
+            //$parsedValue = $this->_parseSubField($nodePaths, $subFieldHandle, $subFieldInfo);
+            $nodePathsArray = [];
+            foreach ($nodePaths AS $nodePathKey => $nodePathVal) {
+                // Get the node number
+                $pathArray = explode("/", $nodePathKey);
+                $nodeNumber = $pathArray[count($pathArray)-2];
+                $nodePathsArray[$nodeNumber][$nodePathKey] = $nodePathVal;
+            }
+
+            $i=1;
+            $parsedValue = [];
+            foreach($nodePathsArray AS $nodePathsArrayKey => $nodePathsArrayValue) {
+                $parsedValueTemp = $this->_parseSubField($nodePathsArrayValue, $subFieldHandle, $subFieldInfo);
+                $parsedValue["new".$i] = reset($parsedValueTemp);
+                $i++;
+            }
+            // END HC HACK!
 
             if (isset($fieldData[$key])) {
                 $fieldData[$key] = array_merge_recursive($fieldData[$key], $parsedValue);
