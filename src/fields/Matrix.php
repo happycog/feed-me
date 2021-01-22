@@ -126,7 +126,7 @@ class Matrix extends Field implements FieldInterface
             // Thanks to this ==> (https://github.com/craftcms/feed-me/issues/470)
             //$parsedValue = $this->_parseSubField($nodePaths, $subFieldHandle, $subFieldInfo);
             $nodePathsArray = [];
-            foreach ($nodePaths AS $nodePathKey => $nodePathVal) {
+            foreach ($nodePaths as $nodePathKey => $nodePathVal) {
                 // Get the node number
                 $pathArray = explode("/", $nodePathKey);
                 $nodeNumber = $pathArray[count($pathArray)-2];
@@ -135,7 +135,7 @@ class Matrix extends Field implements FieldInterface
 
             $i=1;
             $parsedValue = [];
-            foreach($nodePathsArray AS $nodePathsArrayKey => $nodePathsArrayValue) {
+            foreach($nodePathsArray as $nodePathsArrayKey => $nodePathsArrayValue) {
                 $parsedValueTemp = $this->_parseSubField($nodePathsArrayValue, $subFieldHandle, $subFieldInfo);
                 $parsedValue["new".$i] = reset($parsedValueTemp);
                 $i++;
@@ -198,7 +198,12 @@ class Matrix extends Field implements FieldInterface
             foreach ($fields as $subFieldHandle => $subFieldInfo) {
                 $node = Hash::get($subFieldInfo, 'node');
 
-                $nestedFieldNodes = Hash::extract($subFieldInfo, 'fields.{*}.node');
+                // HC Hack by Eli
+                // Include sub-nested nodes in the data
+                $nestedFieldNodes = array_merge(
+                    Hash::extract($subFieldInfo, 'fields.{*}.node'),
+                    Hash::extract($subFieldInfo, 'fields.{*}.fields.{*}.node')
+                );
 
                 if ($nestedFieldNodes) {
                     foreach ($nestedFieldNodes as $key => $nestedFieldNode) {
