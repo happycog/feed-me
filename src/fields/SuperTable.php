@@ -118,7 +118,23 @@ class SuperTable extends Field implements FieldInterface
             $subFieldInfo = Hash::get($complexInfo, 'info');
             $nodePaths = Hash::get($complexInfo, 'data');
 
-            $parsedValue = $this->_parseSubField($nodePaths, $subFieldHandle, $subFieldInfo);
+            // HC Hack by Eli based on 4.3.4
+            // Original HC HACK (2019-12-06, Gary Reckard): Fixing importing into LinkIt inside SuperTable
+            // Thanks to this ==> (https://github.com/craftcms/feed-me/issues/470)
+            //$parsedValue = $this->_parseSubField($nodePaths, $subFieldHandle, $subFieldInfo);
+            $nodePathsArray = [];
+            foreach ($nodePaths as $nodePathKey => $nodePathVal) {
+                // Get the node number
+                $pathArray = explode("/", $nodePathKey);
+                $nodeNumber = $pathArray[count($pathArray)-2];
+                $nodePathsArray[$nodeNumber][$nodePathKey] = $nodePathVal;
+            }
+
+            $parsedValue = [];
+            foreach($nodePathsArray as $nodePathsArrayKey => $nodePathsArrayValue) {
+                $parsedValue = $this->_parseSubField($nodePathsArrayValue, $subFieldHandle, $subFieldInfo);
+            }
+            // END HC HACK!
 
             if (isset($fieldData[$key])) {
                 $fieldData[$key] = array_merge_recursive($fieldData[$key], $parsedValue);
@@ -168,7 +184,12 @@ class SuperTable extends Field implements FieldInterface
         foreach ($fields as $subFieldHandle => $subFieldInfo) {
             $node = Hash::get($subFieldInfo, 'node');
 
-            $nestedFieldNodes = Hash::extract($subFieldInfo, 'fields.{*}.node');
+            // HC Hack by Eli
+            // Include sub-nested nodes in the data
+            $nestedFieldNodes = array_merge(
+                Hash::extract($subFieldInfo, 'fields.{*}.node'),
+                Hash::extract($subFieldInfo, 'fields.{*}.fields.{*}.node')
+            );
 
             if ($nestedFieldNodes) {
                 foreach ($nestedFieldNodes as $key => $nestedFieldNode) {
@@ -183,7 +204,7 @@ class SuperTable extends Field implements FieldInterface
                 }
             }
 
-            if ($feedPath == $node || $node === 'usedefault') {
+            if ($feedPath == $node) {
                 return [
                     'subFieldHandle' => $subFieldHandle,
                     'subFieldInfo' => $subFieldInfo,
